@@ -1,5 +1,3 @@
-// import {round, evaluate} from 'mathjs'
-
 let packet: [string, number];
 
 // Defaults from spec. Should be in ini / config file.
