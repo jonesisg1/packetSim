@@ -1,0 +1,1 @@
+docker run --rm --name node-temp -v "${PWD}:/$(basename $PWD)" -w "/$(basename $PWD)" -p 4000:4000 --entrypoint bash --user node -it node:lts-slim
