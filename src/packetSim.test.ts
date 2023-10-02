@@ -1,4 +1,4 @@
-import { packetSimulation } from "./packetSim";
+import { packetSimulation, VolType } from "./packetSim";
 
 test('10 m', () => {
   expect(packetSimulation([['D',10],['A',0.15],['B',0.15],['C',0.17]])).toBe(0.6878245193);
@@ -51,12 +51,22 @@ test('PS 10 m', () => {
 test('PS 20 m', () => {
   expect(packetSimulation([['D',10],['T',19],['A',0.16],['C',0.14],
                            ['D',20],['T',20],['A',0.16],['B',0.16],
-                           ['D',30]],'C')).toBe(0.665213);
+                           ['D',30]],VolType.Cone)).toBe(0.665213);
 });
 
-test('PS 20 m', () => {
+test('PS 40 m', () => {
   expect(packetSimulation([['D',10],['T',19],['A',0.16],['C',0.14],
                            ['D',20],['T',20],['A',0.16],['B',0.16],
                            ['D',30],['T',20],['A',0.17],['B',0.18],['C',0.15],
-                           ['D',40]],'C')).toBe(1.446411);
+                           ['D',40]
+                          ],VolType.Cone)).toBe(1.446411);
+});
+
+test('PS 50 m', () => {
+  expect(packetSimulation([['D',10],['T',19],['A',0.16],['C',0.14],
+                           ['D',20],['T',20],['A',0.16],['B',0.16],
+                           ['D',30],['T',20],['A',0.17],['B',0.18],['C',0.15],
+                           ['D',40],['T',21],['A',0.17],['C',0.18],
+                           ['D',50]
+                          ],VolType.Cone)).toBe(2.301835);
 });

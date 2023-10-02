@@ -1,4 +1,8 @@
 let packet: [string, number];
+export enum VolType {
+  Cylinder,
+  Cone
+}
 
 // Defaults from spec. Should be in ini / config file.
 const pi: number = 3.141592653589793;
@@ -9,7 +13,7 @@ const defaultTempCompensationMap: Map<string, number> = new Map([
   ['C', 0.044]
 ]);
 
-export function packetSimulation(dataStream: Array<typeof packet>, volType: string = 'V'): number {
+export function packetSimulation(dataStream: Array<typeof packet>, volType: VolType = VolType.Cylinder): number {
   // console.log(dataStream);
   /* Assume 
    * One sensor, one data value. ['SensorType', Value]
@@ -22,7 +26,7 @@ export function packetSimulation(dataStream: Array<typeof packet>, volType: stri
   for (const packet of dataStream) {
     anEngine.processPacket(packet);
   }
-  return (volType === 'V') ? anEngine.volume : anEngine.coneVol;
+  return (volType === VolType.Cylinder) ? anEngine.volume : anEngine.coneVol;
 }
 
 class analysisEngine {
