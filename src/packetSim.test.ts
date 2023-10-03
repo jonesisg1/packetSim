@@ -1,18 +1,19 @@
-import { packetSimulation, VolType } from "./packetSim";
+import { packetSimulation, calculateVolume, calculateConeVol } from "./packetSim";
+
 
 test('10 m', () => {
-  expect(packetSimulation([['D',10],['A',0.15],['B',0.15],['C',0.17]])).toBe(0.6878245193);
+  expect(packetSimulation([['D',10],['A',0.15],['B',0.15],['C',0.17]], calculateVolume)).toBe(0.6878245193);
 });
 
 test('20 m', () => {
-  expect(packetSimulation([['D',10],['A',0.15],['B',0.15],['C',0.17],['D',20],['T',21],['A',0.15],['B',0.16]])).toBe(1.4881613236);
+  expect(packetSimulation([['D',10],['A',0.15],['B',0.15],['C',0.17],['D',20],['T',21],['A',0.15],['B',0.16]], calculateVolume)).toBe(1.4881613236);
 });
 
 test('30 m', () => {
   expect(packetSimulation([['D',10],['A',0.15],['B',0.15],['C',0.17],
                            ['D',20],['T',21],['A',0.15],['B',0.16],
                            ['D',30],['A',0.16],['B',0.18],['C',0.15],
-                          ])).toBe(2.3215816014);
+                          ],calculateVolume)).toBe(2.3215816014);
 });
 
 test('40 m', () => {
@@ -20,7 +21,7 @@ test('40 m', () => {
                            ['D',20],['T',21],['A',0.15],['B',0.16],
                            ['D',30],['A',0.16],['B',0.18],['C',0.15],
                            ['D',40],['T',22],['A',0.17]
-                          ])).toBe(3.3983033241);
+                          ],calculateVolume)).toBe(3.3983033241);
 });
 
 test('60 m', () => {
@@ -30,7 +31,7 @@ test('60 m', () => {
                            ['D',40],['T',22],['A',0.17],
                            ['D',50],['T',22],
                            ['D',60],['T',23],['A',0.18],['B',0.18],['C',0.15]
-                          ])).toBe(5.5665709901);
+                          ],calculateVolume)).toBe(5.5665709901);
 });
 
 test('70 m', () => {
@@ -41,17 +42,17 @@ test('70 m', () => {
                            ['D',50],['T',22],
                            ['D',60],['T',23],['A',0.18],['B',0.18],['C',0.15],
                            ['D',70],['T',24],['A',0.15],['B',0.16],['C',0.16]
-                          ])).toBe(6.5611481163);
+                          ],calculateVolume)).toBe(6.5611481163);
 });
 
 test('PS 10 m', () => {
-  expect(packetSimulation([['D',10],['T',19],['A',0.16],['C',0.14]])).toBe(0.562085514);
+  expect(packetSimulation([['D',10],['T',19],['A',0.16],['C',0.14]],calculateVolume)).toBe(0.562085514);
 });
 
 test('PS 20 m', () => {
   expect(packetSimulation([['D',10],['T',19],['A',0.16],['C',0.14],
                            ['D',20],['T',20],['A',0.16],['B',0.16],
-                           ['D',30]],VolType.Cone)).toBe(0.665213);
+                           ['D',30]],calculateConeVol)).toBe(0.6652128587);
 });
 
 test('PS 40 m', () => {
@@ -59,7 +60,7 @@ test('PS 40 m', () => {
                            ['D',20],['T',20],['A',0.16],['B',0.16],
                            ['D',30],['T',20],['A',0.17],['B',0.18],['C',0.15],
                            ['D',40]
-                          ],VolType.Cone)).toBe(1.446411);
+                          ],calculateConeVol)).toBe(1.4464111441);
 });
 
 test('PS 50 m', () => {
@@ -68,5 +69,5 @@ test('PS 50 m', () => {
                            ['D',30],['T',20],['A',0.17],['B',0.18],['C',0.15],
                            ['D',40],['T',21],['A',0.17],['C',0.18],
                            ['D',50]
-                          ],VolType.Cone)).toBe(2.301835);
+                          ],calculateConeVol)).toBe(2.3018349005);
 });

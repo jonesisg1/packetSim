@@ -1,8 +1,4 @@
 let packet: [string, number];
-export enum VolType {
-  Cylinder,
-  Cone
-}
 
 // Defaults from spec. Should be in ini / config file.
 const pi: number = 3.141592653589793;
@@ -13,7 +9,28 @@ const defaultTempCompensationMap: Map<string, number> = new Map([
   ['C', 0.044]
 ]);
 
-export function packetSimulation(dataStream: Array<typeof packet>, volType: VolType = VolType.Cylinder): number {
+interface sensorData {
+  radious: number, depth: number, prevRadious: number, voidDepth: number
+}
+
+export const calculateVolume = (sd: sensorData): number => {
+  let volume: number =  sd.depth * pi * Math.pow(sd.radious, 2);
+  // Handle voids above using average.
+  if(sd.voidDepth > 0) {
+    volume += sd.voidDepth * pi * Math.pow((sd.radious + sd.prevRadious) / 2, 2);
+  }
+  return volume;
+}
+
+export const calculateConeVol = (sd: sensorData): number => {
+  let coneVol: number = 0;
+  if(sd.prevRadious !== 0) {
+    coneVol = (sd.depth * pi * (Math.pow(sd.radious, 2) + sd.radious * sd.prevRadious + Math.pow(sd.prevRadious, 2))) / 3;
+  }  
+  return coneVol;
+}
+
+export function packetSimulation(dataStream: Array<typeof packet>, calcFunc: (arg: sensorData) => number): number {
   // console.log(dataStream);
   /* Assume 
    * One sensor, one data value. ['SensorType', Value]
@@ -22,25 +39,26 @@ export function packetSimulation(dataStream: Array<typeof packet>, volType: VolT
    * Foating point rounding errors are acceptable.  If not mathjs can be used.
    * Volume output to 10 d.p. (to make testing easier)
    */
-  const anEngine = new analysisEngine(defaultTempCompensationMap);
+  const anEngine = new analysisEngine(defaultTempCompensationMap, calcFunc);
   for (const packet of dataStream) {
     anEngine.processPacket(packet);
   }
-  return (volType === VolType.Cylinder) ? anEngine.volume : anEngine.coneVol;
+  return anEngine.volume;
 }
 
 class analysisEngine {
   #temperatureCompensationMap: Map<string, number>;
   #volume: number = 0;
-  #coneVol: number = 0;
   #prevDepth: number = 0;
   #depth: number = 0;
   #temperature: number = defaultTemp;
   #calliperReadings: number[] = [];
   #prevAvgRadious: number = 0;
   #voidDepth: number = 0;
-  constructor(temperatureCompensation: Map<string, number>) {
+  #calcFunc: (arg: sensorData) => number;
+  constructor(temperatureCompensation: Map<string, number>, calcFunc: (arg: sensorData) => number) {
     this.#temperatureCompensationMap = temperatureCompensation
+    this.#calcFunc = calcFunc
   }
 
   get volume() :number {
@@ -49,15 +67,8 @@ class analysisEngine {
     }
     return Number(this.#volume.toFixed(10));
   }
-  get coneVol():number {
-    if(this.#calliperReadings.length > 0){
-      this.#doCalculations();
-    }
-    return Number(this.#coneVol.toFixed(6));
-  }
 
   processPacket(packet: [string, number]) {
-    // console.log(packet);
     const [sensor, value] = packet;
     switch(sensor) {
       case 'D':
@@ -68,9 +79,7 @@ class analysisEngine {
       case 'T':
         this.#temperature = value;
         break;
-      case 'A':
-      case 'B':
-      case 'C':
+      default:
         this.#calliperReadings.push(this.#temperature * (this.#temperatureCompensationMap.get(sensor) || 1) * value);
     }
   }
@@ -85,34 +94,18 @@ class analysisEngine {
       return;  // No readings at this depth.
     }
 
-    const avgRadious = this.#averageRadious();
-    this.#volume += this.#calculateVolume(avgRadious, depthDelta);
-    this.#coneVol += this.#calculateConeVol(avgRadious, depthDelta);
+    const avgRadious: number = this.#averageRadious();
+    this.#volume += this.#calcFunc({ radious: avgRadious, depth: depthDelta, prevRadious: this.#prevAvgRadious, voidDepth: this.#voidDepth });
 
+    if(this.#voidDepth > 0) {
+      this.#voidDepth = 0;
+    }
     this.#prevAvgRadious = avgRadious;
     this.#calliperReadings = [];
   }
 
   #averageRadious(): number {
-    const sumOfReadings = this.#calliperReadings.reduce((prev, current) => (prev || 0) + current);
+    const sumOfReadings: number = this.#calliperReadings.reduce((prev, current) => (prev || 0) + current);
     return sumOfReadings / this.#calliperReadings.length;
-  }
-
-  #calculateVolume(avgRadious: number, depthDelta: number): number {
-    let volume =  depthDelta * pi * Math.pow(avgRadious, 2);
-    // Handle voids above using average.
-    if(this.#voidDepth > 0) {
-      volume += this.#voidDepth * pi * Math.pow((avgRadious + this.#prevAvgRadious) / 2, 2);
-      this.#voidDepth = 0;
-    }
-    return volume;
-  }
-
-  #calculateConeVol(avgRadious: number, depthDelta: number): number {
-    let coneVol: number = 0;
-    if(this.#prevAvgRadious !== 0) {
-      coneVol =  (depthDelta * pi * (Math.pow(avgRadious, 2) + avgRadious * this.#prevAvgRadious + Math.pow(this.#prevAvgRadious, 2))) / 3;
-    }  
-    return coneVol;
   }
 }
